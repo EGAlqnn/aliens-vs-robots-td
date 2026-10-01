@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aliens vs Robots - Tower Defense</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f4b 50%, #0f1835 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            text-align: center;
+            color: #00ff88;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .game-wrapper {
+            background: linear-gradient(135deg, #1a1f4b 0%, #0f1835 100%);
+            border: 3px solid #00ff88;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5), inset 0 0 20px rgba(0, 255, 136, 0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(100, 50, 255, 0.05) 0%, transparent 50%);
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            cursor: crosshair;
+        }
+
+        .ui-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .ui-box {
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            padding: 10px;
+            color: #00ff88;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00ff88;
+        }
+
+        .ui-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .ui-value {
+            font-size: 1.5em;
+        }
+
+        .tower-info {
+            background: rgba(100, 50, 255, 0.1);
+            border: 2px solid #6432ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            color: #6432ff;
+            text-shadow: 0 0 5px #6432ff;
+        }
+
+        .tower-selection {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tower-btn {
+            padding: 12px;
+            border: 2px solid #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            text-shadow: 0 0 5px #00ff88;
+        }
+
+        .tower-btn:hover {
+            background: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 10px #00ff88;
+            transform: scale(1.05);
+        }
+
+        .tower-btn.selected {
+            background: #00ff88;
+            color: #0a0e27;
+            box-shadow: 0 0 15px #00ff88;
+        }
+
+        .tower-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: 2px solid #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            text-shadow: 0 0 5px #00ff88;
+            text-transform: uppercase;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 10px #00ff88;
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 39, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1f4b 0%, #0f1835 100%);
+            border: 3px solid #00ff88;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            color: #00ff88;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            max-width: 500px;
+        }
+
+        .modal-content h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ff88;
+            text-transform: uppercase;
+        }
+
+        .modal-content p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .modal-content .btn {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .ui-container {
+                grid-template-columns: 1fr;
+            }
+
+            .tower-selection {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .wave-indicator {
+            background: rgba(255, 100, 50, 0.1);
+            border: 2px solid #ff6432;
+            color: #ff6432;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px #ff6432;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚔️ Aliens vs Robots ⚔️</h1>
+            <p style="color: #00ff88; text-shadow: 0 0 5px #00ff88;">Tower Defense in Space</p>
+        </header>
+
+        <div class="game-wrapper">
+            <div class="ui-container">
+                <div class="ui-box">
+                    <span class="ui-label">💰 Credits</span>
+                    <span class="ui-value" id="credits">100</span>
+                </div>
+                <div class="ui-box">
+                    <span class="ui-label">❤️ Lives</span>
+                    <span class="ui-value" id="lives">20</span>
+                </div>
+                <div class="ui-box">
+                    <span class="ui-label">⭐ Score</span>
+                    <span class="ui-value" id="score">0</span>
+                </div>
+            </div>
+
+            <div class="wave-indicator" id="waveIndicator">Wave: 1 | Enemies: 0</div>
+
+            <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+            <div class="tower-info">
+                <p>🎯 <strong>Tower Info:</strong> <span id="towerInfo">Click a tower type to select, then click on canvas to place</span></p>
+            </div>
+
+            <div class="tower-selection">
+                <button class="tower-btn" data-tower="laser">
+                    🔴 LASER TURRET<br><small>50 Credits</small>
+                </button>
+                <button class="tower-btn" data-tower="plasma">
+                    🟣 PLASMA TOWER<br><small>75 Credits</small>
+                </button>
+                <button class="tower-btn" data-tower="ice">
+                    🔵 ICE CANNON<br><small>60 Credits</small>
+                </button>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="startBtn">▶️ START WAVE</button>
+                <button class="btn" id="pauseBtn">⏸️ PAUSE</button>
+                <button class="btn" id="speedBtn">⏩ 2x SPEED</button>
+                <button class="btn" id="resetBtn">🔄 RESET GAME</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Game Over!</h2>
+            <p id="modalMessage">You survived 5 waves!</p>
+            <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
